@@ -1,0 +1,416 @@
+<title>Chrono Défis KB</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: one narrow column built for a phone propped against the kettlebell. The timer card takes the colour of the current phase: orange for work, teal for rest, slate for get-ready. */
+:root {
+  --bg: #EDF0F3;
+  --surface: #FFFFFF;
+  --fg: #14181C;
+  --muted: #55616C;
+  --line: #D3D9DF;
+  --work: #C73E0A;
+  --rest: #0B7A75;
+  --prep: #46515C;
+  --on-phase: #FFFFFF;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101418; --surface: #182027; --fg: #EEF2F5; --muted: #98A5B0; --line: #2A343D;
+    --work: #FF7A3D; --rest: #3CC7BE; --prep: #7B8794; --on-phase: #0E1317;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101418; --surface: #182027; --fg: #EEF2F5; --muted: #98A5B0; --line: #2A343D;
+  --work: #FF7A3D; --rest: #3CC7BE; --prep: #7B8794; --on-phase: #0E1317;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px;
+  padding-block: 20px 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.app { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; letter-spacing: .02em; text-transform: uppercase; margin: 0; line-height: 1; }
+.sub { color: var(--muted); margin: 4px 0 0; font-size: .95rem; }
+.chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.chip {
+  font: 600 .95rem/1.15 var(--font-body); color: var(--fg); background: var(--surface);
+  border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 6px; min-height: 52px; cursor: pointer; text-align: center;
+}
+.chip small { display: block; color: var(--muted); font-weight: 500; font-size: .75rem; margin-top: 2px; }
+.chip[aria-pressed="true"] { border-color: var(--work); box-shadow: inset 0 0 0 1px var(--work); }
+.chip:focus-visible, .btn:focus-visible, .opt input:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+.card {
+  --phase: var(--prep);
+  background: var(--phase); color: var(--on-phase); border-radius: 18px; padding: 20px 16px 18px;
+  display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; transition: background-color .25s;
+}
+.card[data-kind="work"] { --phase: var(--work); }
+.card[data-kind="rest"] { --phase: var(--rest); }
+.phase { font-family: var(--font-display); font-weight: 600; font-size: 1.35rem; letter-spacing: .08em; text-transform: uppercase; overflow-wrap: anywhere; }
+.time { font-family: var(--font-display); font-weight: 700; font-size: clamp(5.5rem, 30vw, 8.5rem); line-height: .95; font-variant-numeric: tabular-nums; }
+.detail { font-weight: 500; font-size: 1.05rem; min-height: 1.4em; overflow-wrap: anywhere; }
+.meta { display: flex; justify-content: space-between; gap: 12px; width: 100%; font-size: .9rem; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 8px; }
+.bar { width: 100%; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--on-phase) 28%, transparent); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--on-phase); }
+.next { font-size: .9rem; opacity: .92; min-height: 1.3em; overflow-wrap: anywhere; }
+.controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn {
+  font: 600 1rem/1.1 var(--font-body); min-height: 52px; border-radius: 12px; border: 1.5px solid var(--line);
+  background: var(--surface); color: var(--fg); cursor: pointer; padding: 10px;
+}
+.btn.main { grid-column: 1 / -1; min-height: 64px; font-size: 1.2rem; background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.btn.accent { grid-column: 1 / -1; border-color: var(--work); color: var(--fg); box-shadow: inset 0 0 0 1px var(--work); }
+.btn:disabled { opacity: .45; cursor: default; }
+.opts { display: flex; gap: 20px; flex-wrap: wrap; color: var(--muted); }
+.opt { display: flex; gap: 8px; align-items: center; min-height: 32px; }
+.opt input { width: 20px; height: 20px; accent-color: var(--work); }
+.result { background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.result h2 { font-family: var(--font-display); font-size: 1.3rem; letter-spacing: .05em; text-transform: uppercase; margin: 0; }
+.result ul { margin: 0; padding: 0; list-style: none; font-variant-numeric: tabular-nums; display: flex; flex-direction: column; gap: 2px; }
+.result li { display: flex; justify-content: space-between; gap: 12px; }
+.tip { color: var(--muted); font-size: .85rem; margin: 0; line-height: 1.45; }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+</style>
+
+<main class="app">
+  <header>
+    <h1>Chrono Défis KB</h1>
+    <p class="sub">Kettlebell 10 kg · phase 1</p>
+  </header>
+
+  <div class="chips" id="chips" role="group" aria-label="Choisir le format"></div>
+
+  <section class="card" id="card" data-kind="prep">
+    <div class="phase" id="phaseLabel" aria-live="polite">Prêt</div>
+    <div class="time" id="time">00:00</div>
+    <div class="detail" id="detail"></div>
+    <div class="meta"><span id="roundTxt"></span><span id="totalTxt"></span></div>
+    <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+    <div class="next" id="next"></div>
+  </section>
+
+  <div class="controls">
+    <button class="btn main" id="mainBtn" type="button">Démarrer</button>
+    <button class="btn accent" id="extraBtn" type="button" hidden></button>
+    <button class="btn" id="skipBtn" type="button">Passer</button>
+    <button class="btn" id="resetBtn" type="button">Remettre à zéro</button>
+  </div>
+
+  <div class="opts">
+    <label class="opt"><input type="checkbox" id="optVoice" checked> Voix</label>
+    <label class="opt"><input type="checkbox" id="optBeep" checked> Bips</label>
+  </div>
+
+  <section class="result" id="result" hidden>
+    <h2 id="resTitle">Terminé</h2>
+    <ul id="resList"></ul>
+    <button class="btn" id="copyBtn" type="button">Copier le résumé</button>
+  </section>
+
+  <p class="tip">Laisse l'écran allumé : la page demande à l'iPhone de ne pas se verrouiller, mais c'est plus sûr de régler le verrouillage automatique sur « Jamais » le temps de la séance. Monte le volume avant de démarrer.</p>
+</main>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  var fmt = function (s) { s = Math.max(0, Math.floor(s)); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); };
+
+  var EMOM_EX = [
+    { n: 'Goblet squat', d: '10 goblet squats' },
+    { n: 'Rowing alterné', d: '6 par bras' },
+    { n: 'Curl press out', d: '6 par bras' }
+  ];
+  var CHIPPER = [
+    'Goblet squat ×50', 'Deadlift ×40', 'Rowing penché ×30',
+    'Curl press out ×20', 'March to lunge ×20', 'Wood chop ×20'
+  ];
+
+  function emom(rounds) {
+    var p = [{ kind: 'prep', label: 'Prêt', detail: 'Premier exercice : ' + EMOM_EX[0].n, sec: 10, speak: 'Prêt. ' + EMOM_EX[0].n }];
+    for (var r = 1; r <= rounds; r++) {
+      EMOM_EX.forEach(function (e) {
+        p.push({ kind: 'work', label: e.n, detail: e.d, sec: 60, round: r, rounds: rounds, speak: e.n + ', ' + e.d });
+      });
+    }
+    return p;
+  }
+  function circuit() {
+    var blocks = [
+      ['Bloc 1 · Jambes', '6 march to lunge, 10 goblet squats, 5 squats sautés'],
+      ['Bloc 2 · Dos et bras', '8 rowings alternés, 10 curls marteau, 6 curl to rotation'],
+      ['Bloc 3 · Gainage', '8 wood chops, 10 deadlifts, 10 relevés de jambes']
+    ];
+    var p = [{ kind: 'prep', label: 'Prêt', detail: 'AMRAP 8 min : ' + blocks[0][0], sec: 10, speak: 'Prêt. Bloc 1, jambes' }];
+    blocks.forEach(function (b, i) {
+      p.push({ kind: 'work', label: b[0], detail: b[1], sec: 480, block: i, round: i + 1, rounds: 3, speak: b[0] + '. Huit minutes. ' + b[1] });
+      if (i < blocks.length - 1) p.push({ kind: 'rest', label: 'Repos', detail: 'Prochain : ' + blocks[i + 1][0], sec: 120, speak: 'Repos deux minutes' });
+    });
+    return p;
+  }
+  function tabata() {
+    var p = [{ kind: 'prep', label: 'Prêt', detail: 'Squats sautés', sec: 10, speak: 'Prêt. Squats sautés' }];
+    for (var r = 1; r <= 8; r++) {
+      p.push({ kind: 'work', label: 'À fond', detail: 'Squats sautés', sec: 20, round: r, rounds: 8, speak: 'À fond' });
+      p.push({ kind: 'rest', label: 'Repos', detail: 'Souffle', sec: 10, round: r, rounds: 8, speak: 'Repos' });
+    }
+    return p;
+  }
+  function repos() {
+    return [{ kind: 'rest', label: 'Repos', detail: 'Entre deux tours du complexe', sec: 90, speak: 'Repos, quatre-vingt-dix secondes' }];
+  }
+
+  var PRESETS = [
+    { id: 'moteur', name: 'Moteur', sub: '10 tours', phases: function () { return emom(10); }, hint: 'EMOM 30 min' },
+    { id: 'moteurp', name: 'Moteur+', sub: '12 tours', phases: function () { return emom(12); }, hint: 'EMOM 36 min' },
+    { id: 'circuit', name: 'Circuit', sub: '3 blocs', phases: circuit, counter: true, hint: 'AMRAP 8 min' },
+    { id: 'tabata', name: 'Tabata', sub: '20 s / 10 s', phases: tabata, hint: 'Squats sautés' },
+    { id: 'repos', name: 'Repos', sub: '90 s', phases: repos, hint: 'Complexe' },
+    { id: 'chipper', name: 'Chipper', sub: 'chrono', stopwatch: true, hint: 'Étape par étape' }
+  ];
+
+  var S = { preset: PRESETS[0], phases: [], total: 0, elapsed: 0, running: false, idx: -1,
+            beeped: {}, counts: [0, 0, 0], splits: [], step: 0, timer: null, last: 0, done: false };
+  var ctx = null, wake = null;
+
+  function opt(name, def) {
+    try { var v = localStorage.getItem(name); return v === null ? def : v === '1'; } catch (e) { return def; }
+  }
+  function save(name, v) { try { localStorage.setItem(name, v); } catch (e) {} }
+  $('optVoice').checked = opt('kb-voice', true);
+  $('optBeep').checked = opt('kb-beep', true);
+  $('optVoice').addEventListener('change', function () { save('kb-voice', this.checked ? '1' : '0'); if (!this.checked) cancelVoice(); });
+  $('optBeep').addEventListener('change', function () { save('kb-beep', this.checked ? '1' : '0'); });
+
+  function audio() {
+    if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ctx = null; } }
+    if (ctx && ctx.state === 'suspended') { try { ctx.resume(); } catch (e) {} }
+  }
+  function beep(freq, dur) {
+    if (!$('optBeep').checked || !ctx) return;
+    try {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'square'; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.35, ctx.currentTime + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(); o.stop(ctx.currentTime + dur + 0.02);
+    } catch (e) {}
+  }
+  function cancelVoice() { try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {} }
+  function say(text) {
+    if (!$('optVoice').checked || !text) return;
+    try {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = 'fr-FR'; u.rate = 1.0;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  function requestWake() {
+    try {
+      if (navigator.wakeLock && navigator.wakeLock.request) {
+        navigator.wakeLock.request('screen').then(function (l) { wake = l; }).catch(function () {});
+      }
+    } catch (e) {}
+  }
+  function releaseWake() { try { if (wake) { wake.release(); wake = null; } } catch (e) {} }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && S.running) requestWake(); });
+
+  function load(p) {
+    stop();
+    S.preset = p; S.elapsed = 0; S.idx = -1; S.beeped = {}; S.counts = [0, 0, 0]; S.splits = []; S.step = 0; S.done = false;
+    S.phases = p.stopwatch ? [] : p.phases();
+    S.total = S.phases.reduce(function (a, ph) { return a + ph.sec; }, 0);
+    $('result').hidden = true;
+    $('mainBtn').textContent = 'Démarrer';
+    $('skipBtn').hidden = !!p.stopwatch;
+    if (p.counter) { $('extraBtn').hidden = false; }
+    else if (p.stopwatch) { $('extraBtn').hidden = false; }
+    else { $('extraBtn').hidden = true; }
+    render();
+    save('kb-preset', p.id);
+    var chips = document.querySelectorAll('.chip');
+    for (var i = 0; i < chips.length; i++) chips[i].setAttribute('aria-pressed', chips[i].getAttribute('data-id') === p.id ? 'true' : 'false');
+  }
+
+  function idxAt(t) {
+    var c = 0;
+    for (var i = 0; i < S.phases.length; i++) { c += S.phases[i].sec; if (t < c) return i; }
+    return S.phases.length - 1;
+  }
+  function phaseEnd(i) { var c = 0; for (var k = 0; k <= i; k++) c += S.phases[k].sec; return c; }
+
+  function tick() {
+    var now = performance.now();
+    S.elapsed += (now - S.last) / 1000; S.last = now;
+    if (S.preset.stopwatch) { render(); return; }
+    if (S.elapsed >= S.total) { finish(); return; }
+    var i = idxAt(S.elapsed);
+    if (i !== S.idx) {
+      S.idx = i;
+      beep(i === 0 ? 1100 : 1400, 0.3);
+      say(S.phases[i].speak);
+    }
+    var rem = Math.ceil(phaseEnd(i) - S.elapsed);
+    if (rem >= 1 && rem <= 3 && !S.beeped[i + ':' + rem]) { S.beeped[i + ':' + rem] = true; beep(880, 0.1); }
+    render();
+  }
+
+  function start() {
+    audio();
+    if (S.done) load(S.preset);
+    S.running = true; S.last = performance.now();
+    $('mainBtn').textContent = 'Pause';
+    requestWake();
+    if (S.preset.stopwatch) {
+      if (S.elapsed === 0) { beep(1100, 0.3); say('Go. ' + CHIPPER[0]); }
+    } else if (S.idx === -1) {
+      S.idx = 0; beep(1100, 0.3); say(S.phases[0].speak);
+    }
+    S.timer = setInterval(tick, 100);
+    render();
+  }
+  function stop() {
+    S.running = false;
+    if (S.timer) { clearInterval(S.timer); S.timer = null; }
+    cancelVoice(); releaseWake();
+  }
+  function pause() { stop(); $('mainBtn').textContent = 'Reprendre'; render(); }
+
+  function finish() {
+    var wasStopwatch = S.preset.stopwatch;
+    stop(); S.done = true;
+    if (!wasStopwatch) S.elapsed = S.total;
+    beep(1400, 0.2); setTimeout(function () { beep(1400, 0.2); }, 260); setTimeout(function () { beep(1800, 0.5); }, 520);
+    say('Terminé');
+    $('mainBtn').textContent = 'Recommencer';
+    showResult();
+    render();
+  }
+
+  function summaryLines() {
+    var L = [];
+    if (S.preset.stopwatch) {
+      S.splits.forEach(function (s) { L.push([s.name, fmt(s.t)]); });
+      L.push(['Total', fmt(S.elapsed)]);
+    } else if (S.preset.counter) {
+      for (var b = 0; b < 3; b++) L.push(['Bloc ' + (b + 1), S.counts[b] + ' tours']);
+    } else if (S.preset.id === 'moteur' || S.preset.id === 'moteurp') {
+      L.push(['Durée', fmt(S.total)]);
+      L.push(['Tours', String(S.phases[S.phases.length - 1].rounds)]);
+    } else {
+      L.push(['Durée', fmt(S.total)]);
+    }
+    return L;
+  }
+  function showResult() {
+    var L = summaryLines();
+    $('resTitle').textContent = S.preset.name + ' terminé';
+    var ul = $('resList'); ul.innerHTML = '';
+    L.forEach(function (r) {
+      var li = document.createElement('li');
+      var a = document.createElement('span'); a.textContent = r[0];
+      var b = document.createElement('strong'); b.textContent = r[1];
+      li.appendChild(a); li.appendChild(b); ul.appendChild(li);
+    });
+    $('result').hidden = false;
+  }
+  $('copyBtn').addEventListener('click', function () {
+    var txt = S.preset.name + ' : ' + summaryLines().map(function (r) { return r[0] + ' ' + r[1]; }).join(', ');
+    var btn = this;
+    function ok() { btn.textContent = 'Copié'; setTimeout(function () { btn.textContent = 'Copier le résumé'; }, 1500); }
+    try { navigator.clipboard.writeText(txt).then(ok).catch(function () { btn.textContent = txt; }); }
+    catch (e) { btn.textContent = txt; }
+  });
+
+  $('mainBtn').addEventListener('click', function () { if (S.running) pause(); else start(); });
+  $('resetBtn').addEventListener('click', function () { load(S.preset); });
+  $('skipBtn').addEventListener('click', function () {
+    if (S.preset.stopwatch || S.done) return;
+    audio();
+    var i = S.idx < 0 ? 0 : S.idx;
+    S.elapsed = phaseEnd(i) + 0.01;
+    if (!S.running) { S.last = performance.now(); }
+    if (S.elapsed >= S.total) { finish(); return; }
+    S.idx = -2; // force announcement of the next phase on the next render/tick
+    var ni = idxAt(S.elapsed); S.idx = ni; beep(1400, 0.3); say(S.phases[ni].speak); render();
+  });
+  $('extraBtn').addEventListener('click', function () {
+    audio();
+    if (S.preset.stopwatch) {
+      if (!S.running || S.done) return;
+      var prev = S.splits.length ? S.splits.reduce(function (a, s) { return a + s.t; }, 0) : 0;
+      S.splits.push({ name: CHIPPER[S.step], t: S.elapsed - prev });
+      S.step++;
+      beep(1200, 0.15);
+      if (S.step >= CHIPPER.length) { finish(); return; }
+      say(CHIPPER[S.step]);
+      render();
+    } else if (S.preset.counter) {
+      var ph = S.phases[S.idx];
+      if (S.running && ph && ph.kind === 'work') { S.counts[ph.block]++; beep(1000, 0.1); render(); }
+    }
+  });
+
+  function render() {
+    var card = $('card');
+    if (S.preset.stopwatch) {
+      var running = S.running || S.elapsed > 0;
+      card.setAttribute('data-kind', S.done ? 'rest' : (running ? 'work' : 'prep'));
+      $('phaseLabel').textContent = S.done ? 'Terminé' : (running ? 'Étape ' + (S.step + 1) + ' sur ' + CHIPPER.length : 'Prêt');
+      $('time').textContent = fmt(S.elapsed);
+      $('detail').textContent = S.done ? 'Chrono final' : CHIPPER[Math.min(S.step, CHIPPER.length - 1)];
+      $('roundTxt').textContent = S.splits.length ? 'Dernière étape ' + fmt(S.splits[S.splits.length - 1].t) : '';
+      $('totalTxt').textContent = '';
+      $('barFill').style.width = (S.step / CHIPPER.length * 100) + '%';
+      $('next').textContent = S.step + 1 < CHIPPER.length && !S.done ? 'Ensuite : ' + CHIPPER[S.step + 1] : (S.done ? '' : 'Dernière étape');
+      $('extraBtn').textContent = 'Étape terminée';
+      $('extraBtn').disabled = !S.running || S.done;
+      return;
+    }
+    var i = S.idx < 0 ? 0 : S.idx;
+    var ph = S.phases[i];
+    var rem = S.idx < 0 ? ph.sec : Math.ceil(phaseEnd(i) - S.elapsed);
+    card.setAttribute('data-kind', S.done ? 'rest' : ph.kind);
+    $('phaseLabel').textContent = S.done ? 'Terminé' : ph.label;
+    $('time').textContent = S.done ? '00:00' : fmt(rem);
+    $('detail').textContent = S.done ? '' : ph.detail;
+    $('roundTxt').textContent = !S.done && ph.round ? (S.preset.counter ? 'Bloc ' : 'Tour ') + ph.round + '/' + ph.rounds : '';
+    $('totalTxt').textContent = fmt(S.elapsed) + ' / ' + fmt(S.total);
+    $('barFill').style.width = Math.min(100, S.elapsed / S.total * 100) + '%';
+    var nx = S.phases[i + 1];
+    $('next').textContent = S.done ? '' : (nx ? 'Ensuite : ' + nx.label + (nx.kind === 'work' && !S.preset.counter ? '' : '') : 'Dernière phase');
+    if (S.preset.counter) {
+      var cur = ph.kind === 'work' ? S.counts[ph.block] : 0;
+      $('extraBtn').textContent = '+1 tour' + (ph.kind === 'work' ? ' (' + cur + ')' : '');
+      $('extraBtn').disabled = !S.running || ph.kind !== 'work' || S.done;
+    }
+  }
+
+  var chipsEl = $('chips');
+  PRESETS.forEach(function (p) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.setAttribute('data-id', p.id); b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = '<span></span><small></small>';
+    b.firstChild.textContent = p.name; b.lastChild.textContent = p.sub;
+    b.addEventListener('click', function () { load(p); });
+    chipsEl.appendChild(b);
+  });
+
+  var saved = null;
+  try { saved = localStorage.getItem('kb-preset'); } catch (e) {}
+  var first = PRESETS[0];
+  PRESETS.forEach(function (p) { if (p.id === saved) first = p; });
+  load(first);
+})();
+</script>
