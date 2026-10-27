@@ -1,3 +1,15 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101418">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Chrono KB">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <title>Chrono Défis KB</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
@@ -124,8 +136,8 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
   var fmt = function (s) { s = Math.max(0, Math.floor(s)); return pad(Math.floor(s / 60)) + ':' + pad(s % 60); };
 
   var EMOM_EX = [
-    { n: 'Goblet squat', d: '10 goblet squats' },
-    { n: 'Rowing alterné', d: '6 par bras' },
+    { n: 'Goblet squats', d: '10 répétitions' },
+    { n: 'Alt bent over rows', d: '6 par bras' },
     { n: 'Curl press out', d: '6 par bras' }
   ];
   var CHIPPER = [
@@ -144,9 +156,9 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
   }
   function circuit() {
     var blocks = [
-      ['Bloc 1 · Jambes', '6 march to lunge, 10 goblet squats, 5 squats sautés'],
-      ['Bloc 2 · Dos et bras', '8 rowings alternés, 10 curls marteau, 6 curl to rotation'],
-      ['Bloc 3 · Gainage', '8 wood chops, 10 deadlifts, 10 relevés de jambes']
+      ['Bloc 1 · Jambes', '6 march to lunge par jambe, 10 goblet squats, 5 squats sautés'],
+      ['Bloc 2 · Dos et bras', '8 alt bent over rows par bras, 10 curls marteau par bras, 6 curl to rotation par côté'],
+      ['Bloc 3 · Gainage', '8 wood chops par côté, 10 deadlifts, 10 relevés de jambes']
     ];
     var p = [{ kind: 'prep', label: 'Prêt', detail: 'AMRAP 8 min : ' + blocks[0][0], sec: 10, speak: 'Prêt. Bloc 1, jambes' }];
     blocks.forEach(function (b, i) {
@@ -163,6 +175,18 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
     }
     return p;
   }
+  function complexe() {
+    var p = [{ kind: 'prep', label: 'Prêt', detail: 'Complexe : 6 tours', sec: 10, speak: 'Prêt. Complexe, six tours' }];
+    var mv = '5 deadlifts, 5 rowings penchés à deux mains, 5 goblet squats, 5 curl press out, 5 march to lunge par jambe';
+    for (var r = 1; r <= 6; r++) {
+      p.push({ kind: 'work', label: 'Complexe', detail: mv, sec: 0, btn: 'Tour terminé', round: r, rounds: 6, speak: 'Tour ' + r + '. Sans poser le kettlebell' });
+      if (r < 6) p.push({ kind: 'rest', label: 'Repos', detail: '90 s avant le tour ' + (r + 1), sec: 90, speak: 'Repos, quatre-vingt-dix secondes' });
+    }
+    [10, 8, 6, 4, 2].forEach(function (n, i) {
+      p.push({ kind: 'work', label: 'Wood chop demi-agenouillé', detail: n + ' par côté', sec: 0, btn: 'Palier terminé', tag: 'Échelle ', round: i + 1, rounds: 5, speak: 'Wood chop demi-agenouillé, ' + n + ' par côté' });
+    });
+    return p;
+  }
   function repos() {
     return [{ kind: 'rest', label: 'Repos', detail: 'Entre deux tours du complexe', sec: 90, speak: 'Repos, quatre-vingt-dix secondes' }];
   }
@@ -172,6 +196,7 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
     { id: 'moteurp', name: 'Moteur+', sub: '12 tours', phases: function () { return emom(12); }, hint: 'EMOM 36 min' },
     { id: 'circuit', name: 'Circuit', sub: '3 blocs', phases: circuit, counter: true, hint: 'AMRAP 8 min' },
     { id: 'tabata', name: 'Tabata', sub: '20 s / 10 s', phases: tabata, hint: 'Squats sautés' },
+    { id: 'complexe', name: 'Complexe', sub: '6 tours', steps: true, phases: complexe, hint: 'Complexe + wood chop' },
     { id: 'repos', name: 'Repos', sub: '90 s', phases: repos, hint: 'Complexe' },
     { id: 'chipper', name: 'Chipper', sub: 'chrono', stopwatch: true, hint: 'Étape par étape' }
   ];
@@ -228,14 +253,14 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
 
   function load(p) {
     stop();
-    S.preset = p; S.elapsed = 0; S.idx = -1; S.beeped = {}; S.counts = [0, 0, 0]; S.splits = []; S.step = 0; S.done = false;
+    S.preset = p; S.elapsed = 0; S.idx = -1; S.beeped = {}; S.counts = [0, 0, 0]; S.splits = []; S.step = 0; S.stepT = 0; S.done = false;
     S.phases = p.stopwatch ? [] : p.phases();
     S.total = S.phases.reduce(function (a, ph) { return a + ph.sec; }, 0);
     $('result').hidden = true;
     $('mainBtn').textContent = 'Démarrer';
     $('skipBtn').hidden = !!p.stopwatch;
     if (p.counter) { $('extraBtn').hidden = false; }
-    else if (p.stopwatch) { $('extraBtn').hidden = false; }
+    else if (p.stopwatch || p.steps) { $('extraBtn').hidden = false; }
     else { $('extraBtn').hidden = true; }
     render();
     save('kb-preset', p.id);
@@ -254,6 +279,7 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
     var now = performance.now();
     S.elapsed += (now - S.last) / 1000; S.last = now;
     if (S.preset.stopwatch) { render(); return; }
+    if (S.preset.steps) { stepTick(); return; }
     if (S.elapsed >= S.total) { finish(); return; }
     var i = idxAt(S.elapsed);
     if (i !== S.idx) {
@@ -263,6 +289,21 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
     }
     var rem = Math.ceil(phaseEnd(i) - S.elapsed);
     if (rem >= 1 && rem <= 3 && !S.beeped[i + ':' + rem]) { S.beeped[i + ':' + rem] = true; beep(880, 0.1); }
+    render();
+  }
+
+  function advance() {
+    S.step++; S.stepT = S.elapsed;
+    if (S.step >= S.phases.length) { finish(); return; }
+    beep(1400, 0.3); say(S.phases[S.step].speak); render();
+  }
+  function stepTick() {
+    var ph = S.phases[S.step], inStep = S.elapsed - S.stepT;
+    if (ph.sec) {
+      if (inStep >= ph.sec) { advance(); return; }
+      var rem = Math.ceil(ph.sec - inStep);
+      if (rem >= 1 && rem <= 3 && !S.beeped[S.step + ':' + rem]) { S.beeped[S.step + ':' + rem] = true; beep(880, 0.1); }
+    }
     render();
   }
 
@@ -290,7 +331,7 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
   function finish() {
     var wasStopwatch = S.preset.stopwatch;
     stop(); S.done = true;
-    if (!wasStopwatch) S.elapsed = S.total;
+    if (!wasStopwatch && !S.preset.steps) S.elapsed = S.total;
     beep(1400, 0.2); setTimeout(function () { beep(1400, 0.2); }, 260); setTimeout(function () { beep(1800, 0.5); }, 520);
     say('Terminé');
     $('mainBtn').textContent = 'Recommencer';
@@ -305,6 +346,10 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
       L.push(['Total', fmt(S.elapsed)]);
     } else if (S.preset.counter) {
       for (var b = 0; b < 3; b++) L.push(['Bloc ' + (b + 1), S.counts[b] + ' tours']);
+    } else if (S.preset.steps) {
+      L.push(['Durée', fmt(S.elapsed)]);
+      L.push(['Tours', '6']);
+      L.push(['Échelle wood chop', '10-8-6-4-2']);
     } else if (S.preset.id === 'moteur' || S.preset.id === 'moteurp') {
       L.push(['Durée', fmt(S.total)]);
       L.push(['Tours', String(S.phases[S.phases.length - 1].rounds)]);
@@ -338,6 +383,7 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
   $('skipBtn').addEventListener('click', function () {
     if (S.preset.stopwatch || S.done) return;
     audio();
+    if (S.preset.steps) { if (S.idx >= 0) advance(); return; }
     var i = S.idx < 0 ? 0 : S.idx;
     S.elapsed = phaseEnd(i) + 0.01;
     if (!S.running) { S.last = performance.now(); }
@@ -347,6 +393,10 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
   });
   $('extraBtn').addEventListener('click', function () {
     audio();
+    if (S.preset.steps) {
+      if (S.running && !S.done && !S.phases[S.step].sec) advance();
+      return;
+    }
     if (S.preset.stopwatch) {
       if (!S.running || S.done) return;
       var prev = S.splits.length ? S.splits.reduce(function (a, s) { return a + s.t; }, 0) : 0;
@@ -364,6 +414,21 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
 
   function render() {
     var card = $('card');
+    if (S.preset.steps) {
+      var sp = S.phases[Math.min(S.step, S.phases.length - 1)], inS = S.idx < 0 ? 0 : S.elapsed - S.stepT;
+      var nxs = S.phases[S.step + 1];
+      card.setAttribute('data-kind', S.done ? 'rest' : sp.kind);
+      $('phaseLabel').textContent = S.done ? 'Terminé' : sp.label;
+      $('time').textContent = S.done ? fmt(S.elapsed) : fmt(sp.sec ? Math.ceil(sp.sec - inS) : inS);
+      $('detail').textContent = S.done ? '' : sp.detail;
+      $('roundTxt').textContent = !S.done && sp.round ? (sp.tag || 'Tour ') + sp.round + '/' + sp.rounds : '';
+      $('totalTxt').textContent = fmt(S.elapsed);
+      $('barFill').style.width = (S.done ? 100 : S.step / S.phases.length * 100) + '%';
+      $('next').textContent = S.done ? '' : (nxs ? 'Ensuite : ' + nxs.label : 'Dernière étape');
+      $('extraBtn').textContent = sp.sec ? (sp.kind === 'rest' ? 'Repos en cours' : 'Prépare-toi') : sp.btn;
+      $('extraBtn').disabled = !S.running || S.done || !!sp.sec;
+      return;
+    }
     if (S.preset.stopwatch) {
       var running = S.running || S.elapsed > 0;
       card.setAttribute('data-kind', S.done ? 'rest' : (running ? 'work' : 'prep'));
@@ -413,4 +478,9 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
   PRESETS.forEach(function (p) { if (p.id === saved) first = p; });
   load(first);
 })();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+}
 </script>
