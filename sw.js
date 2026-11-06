@@ -1,5 +1,5 @@
 // Service worker : précache de l'app (hors ligne) ; polices Google en cache à l'usage.
-const CACHE = 'kb-chrono-v2';
+const CACHE = 'kb-chrono-v3';
 const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {

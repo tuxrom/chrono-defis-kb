@@ -7,6 +7,7 @@ Chrono d'intervalles gratuit pour les séances kettlebell « Défis », en une s
 - **Moteur / Moteur+** : EMOM de 10 ou 12 tours. La voix annonce l'exercice à chaque minute, avec des bips sur les 3 dernières secondes.
 - **Circuit** : 3 blocs AMRAP de 8 min, 2 min de repos, bouton « +1 tour ».
 - **Tabata** : 20 s à fond, 10 s de repos, 8 fois.
+- **Complexe / Complexe+** : 6 ou 8 tours du complexe (5 deadlifts, 5 rowings, 5 goblet squats, 5 curl press out, 5 march to lunge), 90 s de repos entre les tours, bouton « Tour terminé », puis échelle de wood chop 10-8-6-4-2.
 - **Repos 90 s** : minuteur de repos entre deux tours d'un complexe.
 - **Chipper** : chronomètre avec temps intermédiaires par étape.
 

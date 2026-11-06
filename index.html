@@ -175,12 +175,13 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
     }
     return p;
   }
-  function complexe() {
-    var p = [{ kind: 'prep', label: 'Prêt', detail: 'Complexe : 6 tours', sec: 10, speak: 'Prêt. Complexe, six tours' }];
+  function complexe(rounds) {
+    var mots = { 6: 'six', 8: 'huit' };
+    var p = [{ kind: 'prep', label: 'Prêt', detail: 'Complexe : ' + rounds + ' tours', sec: 10, speak: 'Prêt. Complexe, ' + (mots[rounds] || rounds) + ' tours' }];
     var mv = '5 deadlifts, 5 rowings penchés à deux mains, 5 goblet squats, 5 curl press out, 5 march to lunge par jambe';
-    for (var r = 1; r <= 6; r++) {
-      p.push({ kind: 'work', label: 'Complexe', detail: mv, sec: 0, btn: 'Tour terminé', round: r, rounds: 6, speak: 'Tour ' + r + '. Sans poser le kettlebell' });
-      if (r < 6) p.push({ kind: 'rest', label: 'Repos', detail: '90 s avant le tour ' + (r + 1), sec: 90, speak: 'Repos, quatre-vingt-dix secondes' });
+    for (var r = 1; r <= rounds; r++) {
+      p.push({ kind: 'work', label: 'Complexe', detail: mv, sec: 0, btn: 'Tour terminé', round: r, rounds: rounds, speak: 'Tour ' + r + '. Sans poser le kettlebell' });
+      if (r < rounds) p.push({ kind: 'rest', label: 'Repos', detail: '90 s avant le tour ' + (r + 1), sec: 90, speak: 'Repos, quatre-vingt-dix secondes' });
     }
     [10, 8, 6, 4, 2].forEach(function (n, i) {
       p.push({ kind: 'work', label: 'Wood chop demi-agenouillé', detail: n + ' par côté', sec: 0, btn: 'Palier terminé', tag: 'Échelle ', round: i + 1, rounds: 5, speak: 'Wood chop demi-agenouillé, ' + n + ' par côté' });
@@ -196,7 +197,8 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
     { id: 'moteurp', name: 'Moteur+', sub: '12 tours', phases: function () { return emom(12); }, hint: 'EMOM 36 min' },
     { id: 'circuit', name: 'Circuit', sub: '3 blocs', phases: circuit, counter: true, hint: 'AMRAP 8 min' },
     { id: 'tabata', name: 'Tabata', sub: '20 s / 10 s', phases: tabata, hint: 'Squats sautés' },
-    { id: 'complexe', name: 'Complexe', sub: '6 tours', steps: true, phases: complexe, hint: 'Complexe + wood chop' },
+    { id: 'complexe', name: 'Complexe', sub: '6 tours', steps: true, rounds: 6, phases: function () { return complexe(6); }, hint: 'Complexe + wood chop' },
+    { id: 'complexep', name: 'Complexe+', sub: '8 tours', steps: true, rounds: 8, phases: function () { return complexe(8); }, hint: 'Complexe + wood chop' },
     { id: 'repos', name: 'Repos', sub: '90 s', phases: repos, hint: 'Complexe' },
     { id: 'chipper', name: 'Chipper', sub: 'chrono', stopwatch: true, hint: 'Étape par étape' }
   ];
@@ -348,7 +350,7 @@ h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.9rem; lett
       for (var b = 0; b < 3; b++) L.push(['Bloc ' + (b + 1), S.counts[b] + ' tours']);
     } else if (S.preset.steps) {
       L.push(['Durée', fmt(S.elapsed)]);
-      L.push(['Tours', '6']);
+      L.push(['Tours', String(S.preset.rounds)]);
       L.push(['Échelle wood chop', '10-8-6-4-2']);
     } else if (S.preset.id === 'moteur' || S.preset.id === 'moteurp') {
       L.push(['Durée', fmt(S.total)]);
