@@ -236,11 +236,14 @@ export class Runner {
     const durationSec = Math.round(Math.max(0, this.acc - this.prepMs) / 1000);
     return {
       durationSec, complete: this.complete,
-      segments: this.plan.segments.map((m, si) => ({
-        format: m.format, label: m.label, target: m.target, rounds: this.rounds[si] || 0,
-        blocks: m.blocks ? m.blocks.map((name, b) => ({ name, rounds: this.count(si, b) })) : undefined,
-        splits: this.splits.filter((x) => x.seg === si).map(({ label, sec }) => ({ label, sec: Math.round(sec) })),
-      })),
+      segments: this.plan.segments.map((m, si) => {
+        const seg = {
+          format: m.format, label: m.label, target: m.target, rounds: this.rounds[si] || 0,
+          splits: this.splits.filter((x) => x.seg === si).map(({ label, sec }) => ({ label, sec: Math.round(sec) })),
+        };
+        if (m.blocks) seg.blocks = m.blocks.map((name, b) => ({ name, rounds: this.count(si, b) }));
+        return seg;
+      }),
     };
   }
 }
