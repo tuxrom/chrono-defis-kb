@@ -1,0 +1,12 @@
+{
+  "name": "chrono-defis-kb",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Chrono d'intervalles pour les séances kettlebell Défis (PWA, sans backend).",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test tests/",
+    "serve": "python3 -m http.server 8000"
+  }
+}
