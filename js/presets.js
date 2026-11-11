@@ -6,9 +6,6 @@
 const E = (name, reps, o = {}) => ({ name, reps, ...o });
 
 export const SAFETY = 'Douleur > 3/10 = arrêt immédiat. Rien de balistique.';
-export const PHASE2_WARNING =
-  'Le départ de la Phase 2 dépend de l’accord médical. En cas de gêne : remplace le clean + développé par un ' +
-  'curl press out devant, et retire halo, extensions triceps et around the world (version allégée).';
 export const ATW_DEF =
   'Around the world : 1 rep = 2 rotations du KB autour de l’abdomen, la seconde finit par un passage de main à ' +
   'hauteur d’épaule, puis changement de sens.';

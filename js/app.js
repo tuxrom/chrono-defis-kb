@@ -1,6 +1,6 @@
 // Interface : accueil (séances par phase), brief, chrono, fin de séance, historique, réglages.
 import { compile, Runner, fmt } from './engine.js';
-import { PHASE1, PHASE2, SESSIONS, tools, findSession, PHASE2_WARNING, ATW_DEF } from './presets.js';
+import { PHASE1, PHASE2, SESSIONS, tools, findSession, ATW_DEF } from './presets.js';
 import * as H from './history.js';
 
 const VERSION = '2.0.0';
@@ -143,8 +143,6 @@ function brief(id) {
   $('bPhase').textContent = s.phase ? 'Phase ' + s.phase + (s.n ? ' · séance ' + s.n + '/9' : '') : 'Outil';
   $('bName').textContent = s.name;
   $('bShort').textContent = s.short;
-  $('bWarn').hidden = s.phase !== 2;
-  $('bWarn').textContent = PHASE2_WARNING;
   $('bLightRow').hidden = !hasLight(s);
   $('bLight').checked = false;
   $('bAtw').hidden = !JSON.stringify(s.segments).includes('Around the world');

@@ -12,7 +12,7 @@ En ligne : <https://chronokb.openspec.fr>
 ## Utilisation
 
 1. Onglet **Séances** : choisir une séance (Phase 1, Phase 2 ou un outil).
-2. Écran de brief : exercices, record, avertissements ; option **version allégée** pour la Phase 2.
+2. Écran de brief : exercices, record ; option **version allégée** pour la Phase 2.
 3. **Démarrer** : compte à rebours de départ, puis le chrono. Pendant la séance :
    - gros chiffres, nom de l'exercice, répétitions, tour ou bloc en cours, liste des exercices (l'exercice en cours est surligné) ;
    - bouton principal contextuel : **+1 tour** (AMRAP, avec −1 en cas d'erreur), **Round terminé**, **Palier terminé**, **Étape terminée** (split), **Split** (chrono libre) ;
