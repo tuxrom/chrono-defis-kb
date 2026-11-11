@@ -79,7 +79,7 @@ const triceps = (n) => E('Extension triceps', String(n), { drop: true });
 const halo = (n) => E('Halo', n + ' par sens', { drop: true });
 
 const moteur2 = (id, n, name, rounds, [g, cp, r, a]) => ({
-  id, phase: 2, n, name, short: 'EMOM 4 min × ' + rounds + ' (' + rounds * 4 + ' min)', record: { metric: 'rounds' },
+  id, phase: 2, n, name, short: 'EMOM 4 min × ' + rounds, record: { metric: 'rounds' },
   segments: [{ format: 'emom', rounds, minutes: [goblet(g), cleanPress(cp), row(r), atw(a)] }],
 });
 

@@ -1,6 +1,11 @@
-// Service worker : précache de l'app (hors ligne) ; polices Google en cache à l'usage.
-const CACHE = 'kb-chrono-v3';
-const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
+// Service worker : précache de toute l'app (utilisable hors ligne dès la première visite).
+// Stratégie : réponse depuis le cache, mise à jour du cache en arrière-plan (la version suivante sert au prochain lancement).
+const CACHE = 'kb-chrono-v4';
+const ASSETS = [
+  './', 'index.html', 'manifest.webmanifest',
+  'js/app.js', 'js/engine.js', 'js/presets.js', 'js/history.js',
+  'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -15,17 +20,16 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
+  const req = e.request;
+  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   e.respondWith(
-    caches.match(e.request, { ignoreSearch: true }).then((hit) => {
-      const net = fetch(e.request).then((res) => {
-        if (res.ok || res.type === 'opaque') {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
-        }
+    caches.match(req, { ignoreSearch: true }).then((hit) => {
+      const net = fetch(req).then((res) => {
+        if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
         return res;
       });
-      return hit || net.catch(() => hit);
+      if (hit) { net.catch(() => {}); return hit; }
+      return net;
     })
   );
 });
