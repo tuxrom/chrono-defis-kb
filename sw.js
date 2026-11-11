@@ -1,6 +1,6 @@
 // Service worker : précache de toute l'app (utilisable hors ligne dès la première visite).
 // Stratégie : réponse depuis le cache, mise à jour du cache en arrière-plan (la version suivante sert au prochain lancement).
-const CACHE = 'kb-chrono-v6';
+const CACHE = 'kb-chrono-v7';
 const ASSETS = [
   './', 'index.html', 'manifest.webmanifest',
   'js/app.js', 'js/engine.js', 'js/presets.js', 'js/history.js',
