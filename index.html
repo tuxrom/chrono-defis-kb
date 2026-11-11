@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0d1117">
+<meta name="theme-color" content="#101418">
 <meta name="color-scheme" content="dark">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,8 +18,9 @@
 /* Thème sombre unique, gros chiffres lisibles à 2 m, cibles tactiles larges (mains moites).
    La carte du chrono prend la couleur de la phase : orange = effort, turquoise = repos, gris = départ. */
 :root {
-  --bg: #0d1117; --surface: #161b22; --surface2: #1f262e; --fg: #f0f3f6; --muted: #9aa7b3; --line: #2b333c;
-  --work: #ff6a2b; --rest: #2ec4b6; --prep: #5b6672; --on-phase: #0b0f13; --warn: #ffcc4d; --danger: #ff5d5d;
+  /* Palette sombre de la v1 */
+  --bg: #101418; --surface: #182027; --surface2: #202a33; --fg: #EEF2F5; --muted: #98A5B0; --line: #2A343D;
+  --work: #FF7A3D; --rest: #3CC7BE; --prep: #7B8794; --on-phase: #0E1317; --warn: #FFCC4D; --danger: #FF6B5E;
   --font-display: "SF Pro Display", "Roboto Condensed", "Arial Narrow", system-ui, sans-serif;
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: dark;
@@ -39,13 +40,12 @@ p { margin: 0; }
 
 /* En-tête et onglets */
 .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-.tab { min-height: 52px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface); color: var(--fg); font: 600 1rem var(--font-body); cursor: pointer; }
+.tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.tab { min-height: 52px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface); color: var(--fg); font: 600 clamp(.7rem, 3.2vw, .95rem) var(--font-body); cursor: pointer; padding: 4px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tab[aria-current="page"] { border-color: var(--work); box-shadow: inset 0 0 0 1px var(--work); }
 body[data-view="run"] .top, body[data-view="run"] .tabs { display: none; }
 
 /* Bandeaux */
-.safety { background: color-mix(in srgb, var(--danger) 16%, var(--surface)); border: 1.5px solid var(--danger); border-radius: 12px; padding: 10px 12px; font-weight: 700; }
 .warn { background: color-mix(in srgb, var(--warn) 12%, var(--surface)); border: 1.5px solid var(--warn); border-radius: 12px; padding: 12px; }
 .info { background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; padding: 12px; }
 
@@ -129,26 +129,23 @@ details.entry summary { cursor: pointer; font-weight: 600; min-height: 32px; }
 @media (prefers-reduced-motion: reduce) { .card { transition: none; } .time.count { animation: none; } }
 </style>
 </head>
-<body data-view="home">
+<body data-view="p1">
 <main class="app">
   <header class="top">
     <h1>Chrono Défis KB</h1>
     <span class="muted small">KB 10 kg</span>
   </header>
   <nav class="tabs" aria-label="Sections">
-    <button class="tab" type="button" data-go="home" aria-current="page">Séances</button>
+    <button class="tab" type="button" data-go="p1">Phase 1</button>
+    <button class="tab" type="button" data-go="p2">Phase 2</button>
     <button class="tab" type="button" data-go="history">Historique</button>
     <button class="tab" type="button" data-go="settings">Réglages</button>
   </nav>
 
   <!-- Accueil -->
   <section id="v-home" class="list">
-    <p class="safety" id="safetyHome"></p>
-    <p class="info small" id="phaseNote"></p>
-    <h2>Phase 1</h2>
-    <div class="list" id="listP1"></div>
-    <h2>Phase 2</h2>
-    <div class="list" id="listP2"></div>
+    <h2 id="homeTitle">Phase 1</h2>
+    <div class="list" id="listPhase"></div>
     <h2>Outils</h2>
     <div class="list" id="listTools"></div>
   </section>
@@ -160,7 +157,6 @@ details.entry summary { cursor: pointer; font-weight: 600; min-height: 32px; }
       <h1 id="bName"></h1>
       <p class="muted" id="bShort"></p>
     </div>
-    <p class="safety" id="safetyBrief"></p>
     <div class="warn" id="bWarn" hidden></div>
     <label class="toggle" id="bLightRow" hidden><input type="checkbox" id="bLight"> <span><b>Version allégée</b><br><span class="small muted">curl press out devant à la place du clean + développé ; sans halo, extensions triceps ni around the world</span></span></label>
     <div class="info" id="bRecord"></div>
@@ -173,10 +169,7 @@ details.entry summary { cursor: pointer; font-weight: 600; min-height: 32px; }
 
   <!-- Chrono -->
   <section id="v-run" hidden>
-    <div class="list">
-      <div class="runhead"><b id="rName"></b><span class="muted small" id="rSeg"></span></div>
-      <p class="safety small" id="safetyRun"></p>
-    </div>
+    <div class="runhead"><b id="rName"></b><span class="muted small" id="rSeg"></span></div>
     <div class="card" id="card" data-kind="prep" aria-live="polite">
       <div class="phase" id="rLabel">Prêt</div>
       <div class="time" id="rTime">00:00</div>
@@ -203,7 +196,7 @@ details.entry summary { cursor: pointer; font-weight: 600; min-height: 32px; }
     <ul class="res" id="eRes"></ul>
     <h2>Douleur (0 à 10)</h2>
     <div class="pain" id="ePain" role="group" aria-label="Douleur de 0 à 10"></div>
-    <p class="safety" id="ePainWarn" hidden>Douleur &gt; 3/10 : arrête la séance et demande un avis médical avant la suivante.</p>
+    <p class="warn" id="ePainWarn" hidden>Douleur &gt; 3/10 : arrête la séance et demande un avis médical avant la suivante.</p>
     <h2>Note</h2>
     <textarea id="eNote" maxlength="2000" placeholder="Ressenti, charge, épaule…"></textarea>
     <h2>Récapitulatif</h2>

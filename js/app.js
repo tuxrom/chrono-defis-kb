@@ -1,6 +1,6 @@
 // Interface : accueil (séances par phase), brief, chrono, fin de séance, historique, réglages.
 import { compile, Runner, fmt } from './engine.js';
-import { PHASE1, PHASE2, SESSIONS, tools, plannedDate, findSession, SAFETY, PHASE2_WARNING, ATW_DEF, PHASES } from './presets.js';
+import { PHASE1, PHASE2, SESSIONS, tools, findSession, PHASE2_WARNING, ATW_DEF } from './presets.js';
 import * as H from './history.js';
 
 const VERSION = '2.0.0';
@@ -18,7 +18,7 @@ const store = (() => {
 
 const SETTINGS_KEY = 'chronokb.settings.v1';
 const settings = (() => {
-  const def = { sound: true, voice: true, vibrate: true, prep: 10, tabataRounds: 8 };
+  const def = { sound: true, voice: true, vibrate: true, prep: 10, tabataRounds: 8, phase: new Date() >= new Date(2026, 10, 14) ? 2 : 1 };
   try {
     const s = JSON.parse(store.getItem(SETTINGS_KEY) || 'null');
     if (s) return { ...def, ...s };
@@ -78,12 +78,14 @@ function releaseWake() { try { if (wake) wake.release(); } catch { /* déjà lib
 /* ------------------------------ Navigation ------------------------------ */
 
 const VIEWS = ['home', 'brief', 'run', 'end', 'history', 'settings'];
+/** `p1` / `p2` : page de la phase ; `home` : dernière phase consultée. */
 function show(view) {
+  if (view === 'p1' || view === 'p2') { settings.phase = view === 'p1' ? 1 : 2; saveSettings(); view = 'home'; }
   VIEWS.forEach((v) => { $('v-' + v).hidden = v !== view; });
   document.body.dataset.view = view;
+  const tab = view === 'home' || view === 'brief' || view === 'end' ? 'p' + settings.phase : view;
   document.querySelectorAll('.tab').forEach((t) => {
-    const on = t.dataset.go === view || (t.dataset.go === 'home' && (view === 'brief' || view === 'end'));
-    if (on) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+    if (t.dataset.go === tab) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
   });
   window.scrollTo(0, 0);
   if (view === 'home') renderHome();
@@ -99,18 +101,7 @@ function toast(text) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
 }
 
-['safetyHome', 'safetyBrief', 'safetyRun'].forEach((id) => { $(id).textContent = SAFETY; });
-
 /* -------------------------------- Accueil -------------------------------- */
-
-const dayFmt = (d) => d.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' });
-
-function phaseNote(now = new Date()) {
-  const end1 = new Date(2026, 10, 11, 23, 59), start2 = new Date(2026, 10, 14, 0, 0);
-  if (now <= end1) return 'Phase 1 en cours : ' + PHASES[0].note + '. Phase 2 dès le 14/11/2026.';
-  if (now < start2) return 'Repos avant la Phase 2, qui démarre le samedi 14/11/2026 à 18 h (si accord médical).';
-  return 'Phase 2 : ' + PHASES[1].note + '.';
-}
 
 function sessionItem(s, rec) {
   const b = el('button', 'item');
@@ -125,7 +116,7 @@ function sessionItem(s, rec) {
   if (s.phase === 2) {
     const done = history.some((e) => e.sessionId === s.id && e.complete);
     if (done) b.classList.add('done');
-    side.append(el('span', '', (side.childNodes.length ? ' · ' : '') + (done ? '✓ faite' : dayFmt(plannedDate(s.n)) + ' 18 h')));
+    if (done) side.append(el('span', '', (side.childNodes.length ? ' · ' : '') + '✓ faite'));
   }
   b.append(side);
   b.addEventListener('click', () => brief(s.id));
@@ -133,10 +124,10 @@ function sessionItem(s, rec) {
 }
 
 function renderHome() {
-  $('phaseNote').textContent = phaseNote();
   const rec = H.records(history, allSessions());
   const fill = (id, list) => { const c = $(id); c.replaceChildren(...list.map((s) => sessionItem(s, rec[s.id]))); };
-  fill('listP1', PHASE1); fill('listP2', PHASE2); fill('listTools', tools(settings));
+  $('homeTitle').textContent = 'Phase ' + settings.phase;
+  fill('listPhase', settings.phase === 2 ? PHASE2 : PHASE1); fill('listTools', tools(settings));
 }
 
 /* --------------------------------- Brief --------------------------------- */
@@ -151,7 +142,7 @@ function brief(id) {
   cur = { session: s, light: false };
   $('bPhase').textContent = s.phase ? 'Phase ' + s.phase + (s.n ? ' · séance ' + s.n + '/9' : '') : 'Outil';
   $('bName').textContent = s.name;
-  $('bShort').textContent = s.short + (s.phase === 2 ? ' · prévue ' + dayFmt(plannedDate(s.n)) + ' à 18 h' : '');
+  $('bShort').textContent = s.short;
   $('bWarn').hidden = s.phase !== 2;
   $('bWarn').textContent = PHASE2_WARNING;
   $('bLightRow').hidden = !hasLight(s);
